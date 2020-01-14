@@ -4,7 +4,9 @@ const SerialPort = require('serialport');
 const NodeWebcam = require( "node-webcam" );
 const Webcam = NodeWebcam.create();
 const simplayer = require('simplayer');
-
+const Twitter = require('twitter');
+require('dotenv').config();
+const fs = require('fs');
 
 const port = new SerialPort("/dev/cu.usbmodem14101", {
     parser: SerialPort.parsers.readline('\n'),
@@ -78,8 +80,37 @@ function takePhoto(){
     // 4秒待って写真とる
     setTimeout(function(){
         Webcam.capture( "test_picture", function( err, data ) {
+            postTweet();
             console.log('取ってやったぜ')
             isTaken = true;
         } );
     }, 4000)
+}
+
+function postTweet(){
+    const client = new Twitter({
+        consumer_key: process.env.TWITTER_CONSUMER_KEY,
+        consumer_secret: process.env.TWITTER_CONSUMER_SECRET,
+        access_token_key: process.env.TWITTER_ACCESS_TOKEN_KEY,
+        access_token_secret: process.env.TWITTER_ACCESS_TOKEN_SECRET
+    });
+    const imageData = fs.readFileSync("test_picture.jpg") //replace with the path to your image
+    client.post("media/upload", {media: imageData}, function(error, media, response) {
+        if (error) {
+            console.log(error)
+        } else {
+            const status = {
+                status: "sleeping-face-bot: 目覚ましが鳴っても起きなかった愚か者の寝顔はこちらです。",
+                media_ids: media.media_id_string
+            }
+        
+            client.post("statuses/update", status, function(error, tweet, response) {
+                if (error) {
+                    console.log(error)
+                } else {
+                    console.log("Successfully tweeted an image!")
+                }
+            })
+        }
+    })
 }
