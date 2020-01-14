@@ -1,6 +1,10 @@
 'use strict';
 
 const SerialPort = require('serialport');
+const NodeWebcam = require( "node-webcam" );
+const Webcam = NodeWebcam.create();
+
+
 const port = new SerialPort("/dev/cu.usbmodem14101", {
     parser: SerialPort.parsers.readline('\n'),
     baudrate: 9600
